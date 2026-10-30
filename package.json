@@ -1,0 +1,1 @@
+{"name":"meditrack","private":true,"scripts":{"dev:api":"npm --prefix server run dev","dev:web":"npm --prefix client start","build":"npm --prefix server run build && npm --prefix client run build","test":"npm --prefix server test && npm --prefix client test -- --watch=false"}}

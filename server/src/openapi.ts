@@ -1,0 +1,9 @@
+export const openapi = {
+  openapi: '3.0.3', info: { title: 'MediTrack API', version: '1.0.0' }, servers: [{ url: '/api/v1' }],
+  components: { securitySchemes: { cookieAuth: { type: 'apiKey', in: 'cookie', name: 'meditrack' } }, schemas: { Error: { type: 'object', properties: { error: { type: 'string' } } } } },
+  paths: {
+    '/health': { get: { summary: 'Liveness', responses: { '200': { description: 'API alive' } } } }, '/ready': { get: { summary: 'Database readiness', responses: { '200': { description: 'Ready' }, '503': { description: 'Database unavailable' } } } },
+    '/auth/register': { post: { summary: 'Register', responses: { '201': { description: 'Created' }, '400': { description: 'Validation error' } } } }, '/auth/login': { post: { summary: 'Login', responses: { '200': { description: 'Authenticated' }, '401': { description: 'Invalid credentials' } } } }, '/auth/logout': { post: { summary: 'Logout', responses: { '200': { description: 'Logged out' } } } },
+    '/medicines': { get: { security: [{ cookieAuth: [] }], summary: 'List medicines' }, post: { security: [{ cookieAuth: [] }], summary: 'Create medicine' } }, '/medicines/{id}': { patch: { security: [{ cookieAuth: [] }], summary: 'Update medicine' }, delete: { security: [{ cookieAuth: [] }], summary: 'Discontinue medicine' } }, '/schedule': { get: { security: [{ cookieAuth: [] }], summary: 'Generate or read schedule' } }, '/doses/{id}': { patch: { security: [{ cookieAuth: [] }], summary: 'Record taken or skipped dose' } }, '/history': { get: { security: [{ cookieAuth: [] }], summary: 'Dose history and adherence' } }, '/dashboard': { get: { security: [{ cookieAuth: [] }], summary: 'Dashboard overview' } }, '/assistant': { post: { security: [{ cookieAuth: [] }], summary: 'FAQ response or optional Gemini response' } }
+  }
+} as const;

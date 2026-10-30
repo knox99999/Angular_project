@@ -1,0 +1,11 @@
+import mongoose, { Schema } from 'mongoose';
+
+const userSchema = new Schema({ name: { type: String, required: true, trim: true, maxlength: 100 }, email: { type: String, required: true, unique: true, lowercase: true, trim: true }, passwordHash: { type: String, required: true, select: false }, timeZone: { type: String, default: 'Asia/Kolkata' }, notificationPreferences: { browser: { type: Boolean, default: false }, inApp: { type: Boolean, default: true } }, accountStatus: { type: String, enum: ['active', 'disabled'], default: 'active' } }, { timestamps: true });
+const medicineSchema = new Schema({ user: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true }, name: { type: String, required: true, trim: true, maxlength: 120 }, genericName: String, category: String, strength: String, formulation: String, doseQuantity: { type: String, required: true }, route: String, frequency: { type: String, enum: ['once_daily', 'twice_daily', 'custom'], required: true }, times: [{ type: String, match: /^([01]\d|2[0-3]):[0-5]\d$/ }], startDate: { type: Date, required: true }, endDate: Date, durationDays: Number, doctor: String, instructions: String, foodInstructions: String, pharmacyReference: String, notes: String, reminderEnabled: { type: Boolean, default: true }, status: { type: String, enum: ['active', 'completed', 'paused', 'discontinued'], default: 'active' } }, { timestamps: true });
+medicineSchema.index({ user: 1, status: 1, startDate: 1 });
+const doseSchema = new Schema({ user: { type: Schema.Types.ObjectId, ref: 'User', required: true }, medicine: { type: Schema.Types.ObjectId, ref: 'Medicine', required: true }, occurrenceId: { type: String, required: true }, scheduledAt: { type: Date, required: true }, takenAt: Date, status: { type: String, enum: ['scheduled', 'taken', 'skipped', 'missed'], default: 'scheduled' }, notes: String, audit: [{ action: String, at: Date }] }, { timestamps: true });
+doseSchema.index({ user: 1, occurrenceId: 1 }, { unique: true });
+doseSchema.index({ user: 1, scheduledAt: -1 });
+export const User = mongoose.model('User', userSchema);
+export const Medicine = mongoose.model('Medicine', medicineSchema);
+export const DoseRecord = mongoose.model('DoseRecord', doseSchema);

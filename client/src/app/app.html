@@ -1,0 +1,455 @@
+@if (page() === 'login' || page() === 'register') {
+  <main class="auth-screen">
+    <section class="auth-card">
+      <a class="brand" routerLink="/dashboard">
+        <span class="brand-mark">M</span>MediTech
+      </a>
+      <p class="eyebrow">YOUR CARE, IN ONE PLACE</p>
+      <h1>{{ page() === 'login' ? 'Welcome back' : 'Create your account' }}</h1>
+      <p class="muted">A calmer way to keep track of your medicines.</p>
+
+      @if (page() === 'register') {
+        <label>
+          Full name
+          <input [(ngModel)]="name" autocomplete="name">
+        </label>
+      }
+
+      <label>
+        Email address
+        <input type="email" [(ngModel)]="email" autocomplete="email">
+      </label>
+      <label>
+        Password
+        <input
+          type="password"
+          [(ngModel)]="password"
+          [attr.autocomplete]="page() === 'login' ? 'current-password' : 'new-password'"
+        >
+      </label>
+
+      @if (error()) {
+        <div class="alert">{{ error() }}</div>
+      }
+
+      <button
+        mat-flat-button
+        class="primary full"
+        [disabled]="busy()"
+        (click)="auth(page() === 'login' ? 'login' : 'register')"
+      >
+        {{ page() === 'login' ? 'Sign in' : 'Create account' }}
+      </button>
+
+      <p class="switch">
+        {{ page() === 'login' ? 'New to MediTrack?' : 'Already have an account?' }}
+        <a [routerLink]="page() === 'login' ? '/register' : '/login'">
+          {{ page() === 'login' ? 'Create an account' : 'Sign in' }}
+        </a>
+      </p>
+      <p class="fine">For personal medication advice, consult your doctor or pharmacist.</p>
+    </section>
+  </main>
+
+} @else {
+
+  <div class="app-shell">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <a class="brand" routerLink="/dashboard">
+        <span class="brand-mark">M</span>MediTech
+      </a>
+      <div class="nav-label">WORKSPACE</div>
+      <nav>
+        @for (item of nav; track item[0]) {
+          <a [routerLink]="'/' + item[0]" routerLinkActive="active">
+            <span class="nav-icon">{{ item[2] }}</span>{{ item[1] }}
+          </a>
+        }
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="care-note">
+          <span>✦</span>
+          <b>One step at a time</b>
+          <p>Small routines make caring for yourself feel easier.</p>
+        </div>
+        <button class="user-chip" (click)="setPage('profile')">
+          <span class="avatar">{{ user()?.name?.slice(0, 1) || 'G' }}</span>
+          <span>
+            <b>{{ user()?.name || 'Guest' }}</b>
+            <small>{{ user() ? 'Personal account' : 'Sign in to sync' }}</small>
+          </span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main-area">
+
+      <!-- Topbar -->
+      <header class="topbar">
+        <div>
+          <div class="crumb">MEDICATION CARE <span>/</span> {{ page().replace('-', ' ') | uppercase }}</div>
+          <h1>
+            {{ page() === 'dashboard'    ? 'Good to see you'
+             : page() === 'medicines'    ? 'My medicines'
+             : page() === 'add-medicine' ? 'Add a medicine'
+             : page() === 'schedule'     ? 'Medication schedule'
+             : page() === 'history'      ? 'Dose history'
+             : page() === 'assistant'    ? 'AI medical assistant'
+             :                            'Profile & settings' }}
+          </h1>
+        </div>
+        <div class="top-actions">
+          <span class="date-pill">◷ &nbsp; Today</span>
+          @if (user()) {
+            <button class="avatar clickable" (click)="setPage('profile')">{{ user()?.name?.slice(0, 1) }}</button>
+          } @else {
+            <a class="text-link" routerLink="/login">Sign in</a>
+          }
+        </div>
+      </header>
+
+      <!-- Alerts -->
+      @if (error()) {
+        <div class="alert page-alert">
+          {{ error() }}
+          @if (!user()) { <a routerLink="/login">Sign in</a> }
+        </div>
+      }
+      @if (message()) {
+        <div class="success page-alert">{{ message() }}</div>
+      }
+
+      <!-- ── DASHBOARD ── -->
+      @if (page() === 'dashboard') {
+        <section class="welcome-row">
+          <div>
+            <p class="eyebrow">YOUR DAILY CHECK-IN</p>
+            <h2>A little care goes a long way.</h2>
+            <p class="muted">Here's your medication overview for today.</p>
+          </div>
+          <button mat-flat-button class="primary" (click)="setPage('add-medicine')">＋ Add medicine</button>
+        </section>
+
+        <section class="stats-grid">
+          <article class="stat-card">
+            <span class="stat-icon sage">✚</span>
+            <span class="stat-label">Active medicines</span>
+            <b>{{ data()?.activeMedicines ?? '—' }}</b>
+            <small>In your care plan</small>
+          </article>
+          <article class="stat-card">
+            <span class="stat-icon beige">◷</span>
+            <span class="stat-label">Today's doses</span>
+            <b>{{ doses().length }}</b>
+            <small>Scheduled for today</small>
+          </article>
+          <article class="stat-card">
+            <span class="stat-icon burgundy">✓</span>
+            <span class="stat-label">Taken today</span>
+            <b>{{ data()?.taken ?? 0 }}</b>
+            <small>Logged doses</small>
+          </article>
+          <article class="stat-card">
+            <span class="stat-icon gray">○</span>
+            <span class="stat-label">Still to take</span>
+            <b>{{ data()?.pending ?? 0 }}</b>
+            <small>Upcoming or due</small>
+          </article>
+        </section>
+
+        <div class="content-grid">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">YOUR ROUTINE</p>
+                <h3>Today's checklist</h3>
+              </div>
+              <a class="text-link" routerLink="/schedule">Full schedule ↗</a>
+            </div>
+
+            @if (!user()) {
+              <div class="empty">
+                <span>☼</span>
+                <b>Sign in to see your schedule</b>
+                <p>Your private medication information stays connected to your account.</p>
+                <a mat-flat-button class="primary" routerLink="/login">Sign in</a>
+              </div>
+            } @else if (doses().length === 0) {
+              <div class="empty">
+                <span>☼</span>
+                <b>Your day is clear</b>
+                <p>No doses scheduled today. Add a medicine to build your routine.</p>
+                <a mat-flat-button class="primary" routerLink="/add-medicine">＋ Add medicine</a>
+              </div>
+            } @else {
+              @for (d of doses(); track d._id) {
+                <div class="dose-row">
+                  <span class="time-dot">◷</span>
+                  <div class="dose-info">
+                    <b>{{ d.medicine?.name }}</b>
+                    <small>{{ d.medicine?.doseQuantity }} · {{ d.scheduledAt | date:'shortTime' }}</small>
+                  </div>
+                  <span [class]="'status ' + d.status">{{ d.status }}</span>
+                  @if (d.status === 'scheduled') {
+                    <button class="small-action" (click)="dose(d._id, 'taken')">Mark taken</button>
+                  }
+                </div>
+              }
+            }
+          </section>
+
+          <section class="panel side-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">QUICK ACCESS</p>
+                <h3>How can we help?</h3>
+              </div>
+            </div>
+            <button class="quick-link" (click)="setPage('medicines')">
+              <span class="quick-icon">▤</span>
+              <span>
+                <b>Review medicines</b>
+                <small>View and update your list</small>
+              </span>
+              <i>›</i>
+            </button>
+            <button class="quick-link" (click)="setPage('assistant')">
+              <span class="quick-icon warm">✧</span>
+              <span>
+                <b>Ask the assistant</b>
+                <small>General medicine information</small>
+              </span>
+              <i>›</i>
+            </button>
+            <div class="safety-note">
+              <b>✦ A gentle reminder</b>
+              <p>Always follow directions on your prescription. Your pharmacist can help with personal questions.</p>
+            </div>
+          </section>
+        </div>
+
+      <!-- ── MEDICINES ── -->
+      } @else if (page() === 'medicines') {
+        <section class="page-toolbar">
+          <p class="muted">Keep current treatments organized in one place.</p>
+          <button mat-flat-button class="primary" (click)="setPage('add-medicine')">＋ Add medicine</button>
+        </section>
+
+        <div class="filter-row">
+          <input class="search" placeholder="Search medicines…" [(ngModel)]="search" (keyup.enter)="load('medicines')">
+          <button class="outline-btn" (click)="load('medicines')">Search</button>
+        </div>
+
+        <section class="medicine-list">
+          @for (m of medicines(); track m._id) {
+            <article class="medicine-card">
+              <div class="medicine-emblem">✚</div>
+              <div class="medicine-main">
+                <h3>{{ m.name }}</h3>
+                <p>{{ m.strength || 'Strength not set' }} · {{ m.formulation || 'Form not set' }}</p>
+                <small>{{ m.doseQuantity }} · {{ m.frequency?.replace('_', ' ') }} · {{ m.times?.join(', ') }}</small>
+              </div>
+              <span class="status active">{{ m.status }}</span>
+              <button class="outline-btn" (click)="discontinue(m._id)">Discontinue</button>
+            </article>
+          } @empty {
+            <div class="empty large">
+              <span>✚</span>
+              <b>No medicines added yet</b>
+              <p>Add medicines from your prescription to organize your schedule.</p>
+              <button mat-flat-button class="primary" (click)="setPage('add-medicine')">Add your first medicine</button>
+            </div>
+          }
+        </section>
+
+      <!-- ── ADD MEDICINE ── -->
+      } @else if (page() === 'add-medicine') {
+        <section class="form-panel">
+          <p class="muted">Enter details exactly as they appear on your prescription. MediTrack will never infer or change a prescribed dose.</p>
+          <div class="form-grid">
+            <label>
+              Medicine name *
+              <input [(ngModel)]="medicineName" placeholder="e.g. Medicine name">
+            </label>
+            <label>
+              Strength
+              <input [(ngModel)]="strength" placeholder="e.g. 500 mg">
+            </label>
+            <label>
+              Prescribed dose *
+              <input [(ngModel)]="doseQuantity" placeholder="e.g. 1 tablet">
+            </label>
+            <label>
+              Frequency
+              <select [(ngModel)]="frequency">
+                <option value="once_daily">Once daily</option>
+                <option value="twice_daily">Twice daily</option>
+                <option value="custom">Custom</option>
+              </select>
+            </label>
+            <label>
+              Scheduled times *
+              <input [(ngModel)]="times" placeholder="08:00, 20:00">
+              <small>Use 24-hour time; separate multiple times with commas.</small>
+            </label>
+            <label>
+              Start date *
+              <input type="date" [(ngModel)]="startDate">
+            </label>
+            <label>
+              End date (optional)
+              <input type="date" [(ngModel)]="endDate">
+            </label>
+          </div>
+          <div class="form-actions">
+            <button class="outline-btn" (click)="setPage('medicines')">Cancel</button>
+            <button
+              mat-flat-button
+              class="primary"
+              [disabled]="busy() || !medicineName || !doseQuantity || !times"
+              (click)="addMedicine()"
+            >
+              Save medicine
+            </button>
+          </div>
+        </section>
+
+      <!-- ── SCHEDULE / HISTORY ── -->
+      } @else if (page() === 'schedule' || page() === 'history') {
+        <section class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">{{ page() === 'schedule' ? 'YOUR PLAN' : 'YOUR RECORDS' }}</p>
+              <h3>{{ page() === 'schedule' ? 'Today\'s scheduled doses' : 'Recent dose history' }}</h3>
+            </div>
+            <button class="outline-btn" (click)="load()">Refresh</button>
+          </div>
+
+          @if (page() === 'history') {
+            <div class="adherence">
+              <b>{{ data()?.percentage === null ? '—' : (data()?.percentage + '%') }}</b>
+              <span>
+                Adherence for recorded due doses<br>
+                <small>Taken ÷ doses due. Skipped and missed stay in the denominator; future doses are excluded.</small>
+              </span>
+            </div>
+          }
+
+          @for (d of doses(); track d._id) {
+            <div class="dose-row">
+              <span class="time-dot">◷</span>
+              <div class="dose-info">
+                <b>{{ d.medicine?.name || 'Medicine' }}</b>
+                <small>{{ d.scheduledAt | date:'medium' }}</small>
+              </div>
+              <span [class]="'status ' + d.status">{{ d.status }}</span>
+              @if (d.status === 'scheduled' && page() === 'schedule') {
+                <button class="small-action" (click)="dose(d._id, 'taken')">Taken</button>
+                <button class="outline-btn" (click)="dose(d._id, 'skipped')">Skip</button>
+              }
+            </div>
+          } @empty {
+            <div class="empty">
+              <span>☼</span>
+              <b>No dose records yet</b>
+              <p>Schedule and history will appear here when you add medicines.</p>
+            </div>
+          }
+        </section>
+
+      <!-- ── ASSISTANT ── -->
+      } @else if (page() === 'assistant') {
+        <section class="chat-panel">
+          <div class="disclosure">
+            ⓘ General educational information only. Not a diagnosis or substitute for your prescriber or pharmacist. Don't share identifying health details.
+          </div>
+
+          <div class="chat-messages">
+            @if (chats().length === 0) {
+              <div class="assistant-welcome">
+                <span class="assistant-star">✧</span>
+                <h3>What would you like to know?</h3>
+                <p>I can offer general, reviewed guidance and help you prepare questions for a pharmacist.</p>
+                <div class="suggestions">
+                  <button (click)="assistantText = 'What should I check on a medicine label?'">
+                    What should I check on a label?
+                  </button>
+                  <button (click)="assistantText = 'What if I am unsure whether I already took a dose?'">
+                    Unsure if I took a dose?
+                  </button>
+                  <button (click)="assistantText = 'What should I tell my pharmacist?'">
+                    What should I tell my pharmacist?
+                  </button>
+                </div>
+              </div>
+            }
+
+            @for (c of chats(); track $index) {
+              <div [class]="'bubble ' + (c.role === 'You' ? 'mine' : 'theirs')">
+                <small>{{ c.role }}</small>
+                <p>{{ c.text }}</p>
+                <small>{{ c.disclosure }}</small>
+              </div>
+            }
+          </div>
+
+          <div class="chat-compose">
+            <textarea
+              [(ngModel)]="assistantText"
+              (keydown.enter)="$event.preventDefault(); sendChat()"
+              placeholder="Ask a general medicine question…"
+              maxlength="1500"
+            ></textarea>
+            <button
+              mat-flat-button
+              class="primary"
+              [disabled]="busy() || !assistantText.trim()"
+              (click)="sendChat()"
+            >
+              {{ busy() ? 'Thinking…' : 'Send' }}
+            </button>
+          </div>
+          <p class="fine">For urgent symptoms or suspected overdose, contact local emergency services or a poison information service.</p>
+        </section>
+
+      <!-- ── PROFILE ── -->
+      } @else if (page() === 'profile') {
+        <section class="form-panel">
+          <h3>Personal details</h3>
+          <p class="muted">Manage your account and time-zone preference.</p>
+          <div class="form-grid">
+            <label>
+              Full name
+              <input [(ngModel)]="profileName" [placeholder]="user()?.name || 'Your name'">
+            </label>
+            <label>
+              Email address
+              <input [value]="user()?.email || ''" disabled>
+            </label>
+            <label>
+              Time zone
+              <input [(ngModel)]="profileZone" placeholder="Asia/Kolkata">
+            </label>
+          </div>
+          <div class="form-actions">
+            <button mat-flat-button class="primary" (click)="saveProfile()">Save changes</button>
+            @if (user()) {
+              <button class="outline-btn" (click)="logout()">Sign out</button>
+            }
+          </div>
+          <div class="safety-note danger-note">
+            <b>Delete account and personal data</b>
+            <p>This permanently deletes your account, medicines, and dose history.</p>
+            <button class="danger-btn" (click)="deleteAccount()">Delete my account</button>
+          </div>
+        </section>
+      }
+
+      <footer class="footer">MediTech · Your health information is private and belongs to you.</footer>
+    </main>
+
+  </div>
+}
